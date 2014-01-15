@@ -79,7 +79,7 @@ namespace TinyTinyRss
         /// antérieure.  L'état n'aura pas la valeur Null lors de la première visite de la page.</param>
         private async void navigationHelper_LoadState(object sender, LoadStateEventArgs e)
         {
-            var group = await TTRssDataSource.GetGroupAsync((String)e.NavigationParameter);
+            var group = await TTRssDataSource.GetGroupAsync((int) e.NavigationParameter);
             this.DefaultViewModel["Group"] = group;
             this.DefaultViewModel["Items"] = group.Items;
 
@@ -98,7 +98,7 @@ namespace TinyTinyRss
                 // Restaure l'état précédemment enregistré associé à cette page
                 if (e.PageState.ContainsKey("SelectedItem") && this.itemsViewSource.View != null)
                 {
-                    var selectedItem = await TTRssDataSource.GetItemAsync((String)e.PageState["SelectedItem"]);
+                    var selectedItem = await TTRssDataSource.GetItemAsync((int) e.PageState["SelectedItem"]);
                     this.itemsViewSource.View.MoveCurrentTo(selectedItem);
                 }
             }
@@ -119,7 +119,7 @@ namespace TinyTinyRss
         {
             if (this.itemsViewSource.View != null)
             {
-                var selectedItem = (Data.SampleDataItem)this.itemsViewSource.View.CurrentItem;
+                var selectedItem = (Data.RssArticle)this.itemsViewSource.View.CurrentItem;
                 if (selectedItem != null) e.PageState["SelectedItem"] = selectedItem.UniqueId;
             }
         }
@@ -168,6 +168,17 @@ namespace TinyTinyRss
             // aux détails concernant l'élément sélectionné.  Lorsque cet élément est désélectionné, l'effet inverse
             // est produit.
             if (this.UsingLogicalPageNavigation()) this.InvalidateVisualState();
+
+            Selector list = sender as Selector;
+            RssArticle selectedItem = list.SelectedItem as RssArticle;
+            if (selectedItem != null)
+            {
+                this.contentView.NavigateToString(selectedItem.Content);
+            }
+            else
+            {
+                this.contentView.NavigateToString("");
+            }   
         }
 
         private bool CanGoBack()

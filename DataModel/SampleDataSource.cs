@@ -4,9 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Data.Json;
-using Windows.Storage;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Media.Imaging;
+using Windows.Web.Http;
 
 // Le modèle de données défini par ce fichier sert d'exemple représentatif d'un modèle fortement typé
 // modèle.  Les noms de propriétés choisis correspondent aux liaisons de données dans les modèles d'élément standard.
@@ -21,9 +19,9 @@ namespace TinyTinyRss.Data
     /// <summary>
     /// Modèle de données d'élément générique.
     /// </summary>
-    public class SampleDataItem
+    public class RssArticle
     {
-        public SampleDataItem(String uniqueId, String title, String subtitle, String imagePath, String description, String content)
+        public RssArticle(int uniqueId, String title, String subtitle, String imagePath, String description, String content)
         {
             this.UniqueId = uniqueId;
             this.Title = title;
@@ -33,7 +31,7 @@ namespace TinyTinyRss.Data
             this.Content = content;
         }
 
-        public string UniqueId { get; private set; }
+        public int UniqueId { get; private set; }
         public string Title { get; private set; }
         public string Subtitle { get; private set; }
         public string Description { get; private set; }
@@ -49,28 +47,36 @@ namespace TinyTinyRss.Data
     /// <summary>
     /// Modèle de données de groupe générique.
     /// </summary>
-    public class SampleDataGroup
+    public class RssFeed
     {
-        public SampleDataGroup(String uniqueId, String title, String subtitle, String imagePath, String description)
+        public RssFeed(int uniqueId, String title, String subtitle, String imagePath, String description)
         {
             this.UniqueId = uniqueId;
             this.Title = title;
             this.Subtitle = subtitle;
             this.Description = description;
             this.ImagePath = imagePath;
-            this.Items = new ObservableCollection<SampleDataItem>();
+            this.Items = new ObservableCollection<RssArticle>();
         }
 
-        public string UniqueId { get; private set; }
+        public int UniqueId { get; private set; }
         public string Title { get; private set; }
         public string Subtitle { get; private set; }
         public string Description { get; private set; }
         public string ImagePath { get; private set; }
-        public ObservableCollection<SampleDataItem> Items { get; private set; }
+        public ObservableCollection<RssArticle> Items { get; private set; }
 
         public override string ToString()
         {
             return this.Title;
+        }
+    }
+
+    public class InvalidConfigurationException : Exception
+    {
+
+        public InvalidConfigurationException(string message) : base(message)
+        {
         }
     }
 
@@ -82,72 +88,115 @@ namespace TinyTinyRss.Data
     /// </summary>
     public sealed class TTRssDataSource
     {
-        private static TTRssDataSource _sampleDataSource = new TTRssDataSource();
+        private static string _token = null;
 
-        private ObservableCollection<SampleDataGroup> _groups = new ObservableCollection<SampleDataGroup>();
-        public ObservableCollection<SampleDataGroup> Groups
+        private static ObservableCollection<RssFeed> _groups = new ObservableCollection<RssFeed>();
+        public static ObservableCollection<RssFeed> Groups
         {
-            get { return this._groups; }
+            get { return _groups; }
         }
 
-        public static async Task<IEnumerable<SampleDataGroup>> GetGroupsAsync()
+        private static async Task<JsonObject> QueryApi(JsonObject json)
         {
-            await _sampleDataSource.GetSampleDataAsync();
-
-            return _sampleDataSource.Groups;
-        }
-
-        public static async Task<SampleDataGroup> GetGroupAsync(string uniqueId)
-        {
-            await _sampleDataSource.GetSampleDataAsync();
-            // Une simple recherche linéaire est acceptable pour les petits groupes de données
-            var matches = _sampleDataSource.Groups.Where((group) => group.UniqueId.Equals(uniqueId));
-            if (matches.Count() == 1) return matches.First();
-            return null;
-        }
-
-        public static async Task<SampleDataItem> GetItemAsync(string uniqueId)
-        {
-            await _sampleDataSource.GetSampleDataAsync();
-            // Une simple recherche linéaire est acceptable pour les petits groupes de données
-            var matches = _sampleDataSource.Groups.SelectMany(group => group.Items).Where((item) => item.UniqueId.Equals(uniqueId));
-            if (matches.Count() == 1) return matches.First();
-            return null;
-        }
-
-        private async Task GetSampleDataAsync()
-        {
-            if (this._groups.Count != 0)
-                return;
-
-            Uri dataUri = new Uri("ms-appx:///DataModel/SampleData.json");
-
-            StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(dataUri);
-            string jsonText = await FileIO.ReadTextAsync(file);
-            JsonObject jsonObject = JsonObject.Parse(jsonText);
-            JsonArray jsonArray = jsonObject["Groups"].GetArray();
-
-            foreach (JsonValue groupValue in jsonArray)
+        reQuery:
+            if(_token != null)
             {
-                JsonObject groupObject = groupValue.GetObject();
-                SampleDataGroup group = new SampleDataGroup(groupObject["UniqueId"].GetString(),
-                                                            groupObject["Title"].GetString(),
-                                                            groupObject["Subtitle"].GetString(),
-                                                            groupObject["ImagePath"].GetString(),
-                                                            groupObject["Description"].GetString());
-
-                foreach (JsonValue itemValue in groupObject["Items"].GetArray())
-                {
-                    JsonObject itemObject = itemValue.GetObject();
-                    group.Items.Add(new SampleDataItem(itemObject["UniqueId"].GetString(),
-                                                       itemObject["Title"].GetString(),
-                                                       itemObject["Subtitle"].GetString(),
-                                                       itemObject["ImagePath"].GetString(),
-                                                       itemObject["Description"].GetString(),
-                                                       itemObject["Content"].GetString()));
-                }
-                this.Groups.Add(group);
+                if(json.ContainsKey("sid"))
+                    json.Remove("sid");
+                json.Add("sid", JsonValue.CreateStringValue(_token));
             }
+            Settings settings = Settings.GetInstance();
+
+            if (settings.InstanceUri == null)
+                throw new InvalidConfigurationException("URI not set");
+
+            Uri uri = new Uri(settings.InstanceUri, "api/");
+            HttpClient http = new HttpClient();
+            HttpResponseMessage result = await http.PostAsync(uri, new HttpStringContent(json.Stringify()));
+            JsonObject jsonRes;
+            bool ok = JsonObject.TryParse(await result.Content.ReadAsStringAsync(), out jsonRes);
+            if (!ok)
+                throw new InvalidConfigurationException("Not JSON");
+
+            if (jsonRes.GetNamedNumber("status") != 0)
+            {
+                if (jsonRes.GetNamedObject("content").GetNamedString("error") == "NOT_LOGGED_IN")
+                {
+                    await GetToken();
+                    await QueryApi(json);
+                    goto reQuery;
+                }
+                else if (jsonRes.GetNamedObject("content").GetNamedString("error") == "LOGIN_ERROR")
+                    throw new InvalidConfigurationException("Login error");
+            }
+            return jsonRes;
         }
+
+        private static async Task GetToken()
+        {
+            Settings settings = Settings.GetInstance();
+            JsonObject json = new JsonObject();
+            json.Add("op", JsonValue.CreateStringValue("login"));
+            json.Add("user", JsonValue.CreateStringValue(settings.Username));
+            json.Add("password", JsonValue.CreateStringValue(settings.Password));
+            
+            json = await QueryApi(json);
+
+            _token = json.GetNamedObject("content").GetNamedString("session_id");
+        }
+
+        public static async Task<IEnumerable<RssFeed>> GetGroupsAsync()
+        {
+            JsonObject jsonRequest = new JsonObject();
+            jsonRequest.Add("op", JsonValue.CreateStringValue("getFeeds"));
+            jsonRequest.Add("cat_id", JsonValue.CreateNumberValue(-4));
+
+            JsonObject jsonResponse = await QueryApi(jsonRequest);
+            JsonArray feeds = jsonResponse.GetNamedArray("content");
+
+            Groups.Clear();
+            foreach(JsonValue val in feeds)
+            {
+                JsonObject feed = val.GetObject();
+                RssFeed rssFeed = new RssFeed((int) feed.GetNamedNumber("id"), feed.GetNamedString("title"), "Subtitle", "Assets/DarkGray.png", "Description");
+                Groups.Add(rssFeed);
+            }
+            return Groups;
+        }
+
+        public static async Task<RssFeed> GetGroupAsync(int uniqueId)
+        {
+            JsonObject jsonRequest = new JsonObject();
+            jsonRequest.Add("op", JsonValue.CreateStringValue("getHeadlines"));
+            jsonRequest.Add("feed_id", JsonValue.CreateNumberValue(uniqueId));
+            jsonRequest.Add("show_excerpt", JsonValue.CreateBooleanValue(true));
+            jsonRequest.Add("show_content", JsonValue.CreateBooleanValue(true));
+
+            JsonObject jsonResponse = await QueryApi(jsonRequest);
+            JsonArray feeds = jsonResponse.GetNamedArray("content");
+
+            var matches = Groups.Where((group) => group.UniqueId.Equals(uniqueId));
+            RssFeed feed = matches.First();
+            feed.Items.Clear();
+
+            foreach (JsonValue val in feeds)
+            {
+                JsonObject article = val.GetObject();
+                feed.Items.Add(new RssArticle((int)article.GetNamedNumber("id"), article.GetNamedString("title"), "SubToto", "Assets/DarkGray.png", article.GetNamedString("excerpt"), article.GetNamedString("content")));
+            }
+            return feed;
+        }
+
+        public static async Task<RssArticle> GetItemAsync(int uniqueId)
+        {
+            JsonObject jsonRequest = new JsonObject();
+            jsonRequest.Add("op", JsonValue.CreateStringValue("getArticle"));
+            jsonRequest.Add("article_id", JsonValue.CreateNumberValue(uniqueId));
+
+            JsonObject jsonResponse = await QueryApi(jsonRequest);
+            JsonObject article = jsonResponse.GetNamedArray("content").First().GetObject();
+            return new RssArticle((int) article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("author"), "Assets/DarkGray.png", "TotoDesc", article.GetNamedString("content"));
+        }
+       
     }
 }

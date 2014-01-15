@@ -15,6 +15,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using Windows.Security.Credentials.UI;
 
 // Pour en savoir plus sur le modèle d'élément Page Éléments, consultez la page http://go.microsoft.com/fwlink/?LinkId=234233
 
@@ -67,8 +68,17 @@ namespace TinyTinyRss
         private async void navigationHelper_LoadState(object sender, LoadStateEventArgs e)
         {
             // TODO: créez un modèle de données approprié pour le domaine posant problème pour remplacer les exemples de données
-            var sampleDataGroups = await TTRssDataSource.GetGroupsAsync();
-            this.DefaultViewModel["Items"] = sampleDataGroups;
+
+            try
+            {
+                var sampleDataGroups = await TTRssDataSource.GetGroupsAsync();
+                this.DefaultViewModel["Items"] = sampleDataGroups;
+            }
+            catch(InvalidConfigurationException ex)
+            {
+                GeneralSettingsFlyout sf = new GeneralSettingsFlyout();
+                sf.ShowIndependent();
+            }
         }
 
         /// <summary>
@@ -81,7 +91,7 @@ namespace TinyTinyRss
         {
             // Accédez à la page de destination souhaitée, puis configurez la nouvelle page
             // en transmettant les informations requises en tant que paramètre de navigation.
-            var groupId = ((SampleDataGroup)e.ClickedItem).UniqueId;
+            var groupId = ((RssFeed)e.ClickedItem).UniqueId;
             this.Frame.Navigate(typeof(SplitPage), groupId);
         }
 

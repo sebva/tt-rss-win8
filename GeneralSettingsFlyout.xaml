@@ -22,8 +22,14 @@
             <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Connection " />
 
             <!-- Corps de la section 1 -->
-            <TextBox x:Name="tbxUrl" Header="Instance URL" Width="200"/>
+            <TextBox x:Name="tbxUrl" Header="Instance URL" Width="200" InputScope="Url" TextChanged="saveSettings"/>
+
+            <TextBox x:Name="tbxUser" Header="Username" Width="200" TextChanged="saveSettings"/>
             
+            <PasswordBox x:Name="tbxPassword" Header="Password" Width="200" PasswordChanged="saveSettings"/>
+
+
+
 
         </StackPanel>
         <StackPanel Style="{StaticResource SettingsFlyoutSectionStyle}"/>

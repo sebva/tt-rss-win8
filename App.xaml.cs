@@ -131,6 +131,7 @@ namespace TinyTinyRss
         private async void OnSuspending(object sender, SuspendingEventArgs e)
         {
             var deferral = e.SuspendingOperation.GetDeferral();
+            Settings.GetInstance().SaveState();
             await SuspensionManager.SaveAsync();
             deferral.Complete();
         }

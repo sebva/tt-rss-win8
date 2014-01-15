@@ -19,9 +19,33 @@ namespace TinyTinyRss
 {
     public sealed partial class GeneralSettingsFlyout : SettingsFlyout
     {
+        private Settings settings;
+
         public GeneralSettingsFlyout()
         {
             this.InitializeComponent();
+
+            settings = Settings.GetInstance();
+
+            if(settings.InstanceUri != null)
+                tbxUrl.Text = settings.InstanceUri.AbsoluteUri;
+            if(settings.Username != null)
+                tbxUser.Text = settings.Username;
+            if(settings.Password != null)
+                tbxPassword.Password = settings.Password;
+        }
+
+        private void saveSettings(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                settings.InstanceUri = new Uri(tbxUrl.Text);
+            }
+            catch
+            {
+            }
+            settings.Username = tbxUser.Text;
+            settings.Password = tbxPassword.Password;
         }
     }
 }
