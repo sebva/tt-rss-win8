@@ -104,6 +104,16 @@ namespace TinyTinyRss
             }
         }
 
+        private void RefreshButton_Click(object sender, RoutedEventArgs e)
+        {
+            // TODO
+        }
+
+        private void AppBarButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
         /// <summary>
         /// Conserve l'état associé à cette page en cas de suspension de l'application ou de la
         /// suppression de la page du cache de navigation.  Les valeurs doivent être conformes aux

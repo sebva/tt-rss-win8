@@ -119,7 +119,7 @@
       <DependentUpon>SplitPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="DataModel\SampleDataSource.cs" />
+    <Compile Include="DataModel\TTRssDataSource.cs" />
     <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Common\ObservableDictionary.cs" />
     <Compile Include="Common\NavigationHelper.cs" />
@@ -131,7 +131,6 @@
     </AppxManifest>
     <None Include="Common\ReadMe.txt" />
     <None Include="TinyTinyRss_TemporaryKey.pfx" />
-    <Content Include="DataModel\SampleData.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Assets\Logo.scale-100.png" />

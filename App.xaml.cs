@@ -103,12 +103,18 @@ namespace TinyTinyRss
                     (handler) =>
                     {
                         GeneralSettingsFlyout sf = new GeneralSettingsFlyout();
+                        sf.Unloaded += sf_Unloaded;
                         sf.Show();
                     });
                 e.Request.ApplicationCommands.Add(defaultsCommand);
             };
 
             base.OnWindowCreated(args);
+        }
+
+        void sf_Unloaded(object sender, RoutedEventArgs e)
+        {
+            Settings.GetInstance().SaveState();
         }
 
         /// <summary>

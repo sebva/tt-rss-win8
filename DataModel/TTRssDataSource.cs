@@ -21,12 +21,11 @@ namespace TinyTinyRss.Data
     /// </summary>
     public class RssArticle
     {
-        public RssArticle(int uniqueId, String title, String subtitle, String imagePath, String description, String content)
+        public RssArticle(int uniqueId, String title, String subtitle, String imagePath, String content)
         {
             this.UniqueId = uniqueId;
             this.Title = title;
             this.Subtitle = subtitle;
-            this.Description = description;
             this.ImagePath = imagePath;
             this.Content = content;
         }
@@ -34,7 +33,6 @@ namespace TinyTinyRss.Data
         public int UniqueId { get; private set; }
         public string Title { get; private set; }
         public string Subtitle { get; private set; }
-        public string Description { get; private set; }
         public string ImagePath { get; private set; }
         public string Content { get; private set; }
 
@@ -49,12 +47,11 @@ namespace TinyTinyRss.Data
     /// </summary>
     public class RssFeed
     {
-        public RssFeed(int uniqueId, String title, String subtitle, String imagePath, String description)
+        public RssFeed(int uniqueId, String title, String subtitle, String imagePath)
         {
             this.UniqueId = uniqueId;
             this.Title = title;
             this.Subtitle = subtitle;
-            this.Description = description;
             this.ImagePath = imagePath;
             this.Items = new ObservableCollection<RssArticle>();
         }
@@ -62,7 +59,6 @@ namespace TinyTinyRss.Data
         public int UniqueId { get; private set; }
         public string Title { get; private set; }
         public string Subtitle { get; private set; }
-        public string Description { get; private set; }
         public string ImagePath { get; private set; }
         public ObservableCollection<RssArticle> Items { get; private set; }
 
@@ -158,7 +154,22 @@ namespace TinyTinyRss.Data
             foreach(JsonValue val in feeds)
             {
                 JsonObject feed = val.GetObject();
-                RssFeed rssFeed = new RssFeed((int) feed.GetNamedNumber("id"), feed.GetNamedString("title"), "Subtitle", "Assets/DarkGray.png", "Description");
+                string imageUri = "Assets/DarkGray.png";
+                string unreadStr = "";
+
+                if (feed.GetNamedBoolean("has_icon", false))
+                    imageUri = Settings.GetInstance().InstanceUri + "/feed-icons/" + feed.GetNamedNumber("id").ToString() + ".ico";
+                JsonValue unread = feed.GetNamedValue("unread");
+                int unreadInt = -1;
+                if (unread.ValueType.Equals(JsonValueType.Number))
+                    unreadInt = (int) unread.GetNumber();
+                if (unread.ValueType.Equals(JsonValueType.String))
+                    unreadInt = int.Parse(unread.GetString());
+
+                if (unreadInt != -1)
+                    unreadStr = unreadInt + " unread";
+
+                RssFeed rssFeed = new RssFeed((int) feed.GetNamedNumber("id"), feed.GetNamedString("title"), unreadStr, imageUri);
                 Groups.Add(rssFeed);
             }
             return Groups;
@@ -169,7 +180,6 @@ namespace TinyTinyRss.Data
             JsonObject jsonRequest = new JsonObject();
             jsonRequest.Add("op", JsonValue.CreateStringValue("getHeadlines"));
             jsonRequest.Add("feed_id", JsonValue.CreateNumberValue(uniqueId));
-            jsonRequest.Add("show_excerpt", JsonValue.CreateBooleanValue(true));
             jsonRequest.Add("show_content", JsonValue.CreateBooleanValue(true));
 
             JsonObject jsonResponse = await QueryApi(jsonRequest);
@@ -182,7 +192,18 @@ namespace TinyTinyRss.Data
             foreach (JsonValue val in feeds)
             {
                 JsonObject article = val.GetObject();
-                feed.Items.Add(new RssArticle((int)article.GetNamedNumber("id"), article.GetNamedString("title"), "SubToto", "Assets/DarkGray.png", article.GetNamedString("excerpt"), article.GetNamedString("content")));
+                string imagePath = "Assets/DarkGray.png";
+                JsonValue feed_id = article.GetNamedValue("feed_id");
+                int feed_id_int = -1;
+                if (feed_id.ValueType.Equals(JsonValueType.Number))
+                    feed_id_int = (int)feed_id.GetNumber();
+                if (feed_id.ValueType.Equals(JsonValueType.String))
+                    feed_id_int = int.Parse(feed_id.GetString());
+
+                if (feed_id_int != -1 && Groups.Where((group) => group.UniqueId.Equals(feed_id_int)).First().ImagePath != imagePath)
+                    imagePath = Settings.GetInstance().InstanceUri + "/feed-icons/" + feed_id_int + ".ico";
+
+                feed.Items.Add(new RssArticle((int)article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("feed_title"), imagePath, article.GetNamedString("content")));
             }
             return feed;
         }
@@ -195,7 +216,7 @@ namespace TinyTinyRss.Data
 
             JsonObject jsonResponse = await QueryApi(jsonRequest);
             JsonObject article = jsonResponse.GetNamedArray("content").First().GetObject();
-            return new RssArticle((int) article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("author"), "Assets/DarkGray.png", "TotoDesc", article.GetNamedString("content"));
+            return new RssArticle((int) article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("author"), "Assets/DarkGray.png", article.GetNamedString("content"));
         }
        
     }

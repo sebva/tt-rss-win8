@@ -11,6 +11,18 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <Page.BottomAppBar>
+        <CommandBar>
+            <AppBarButton Label="Refresh" Icon="Refresh" Click="RefreshButton_Click"/>
+
+            <CommandBar.SecondaryCommands>
+                <AppBarButton Label="Read" Icon="MailFilled" Click="AppBarButton_Click"/>
+                <AppBarButton Label="Star" Icon="Favorite" Click="AppBarButton_Click"/>
+                <AppBarButton Label="Publish" Icon="ReShare" Click="AppBarButton_Click"/>
+            </CommandBar.SecondaryCommands>
+        </CommandBar>
+    </Page.BottomAppBar>
+
     <Page.Resources>
         <!-- Collection d'éléments affichés par cette page -->
         <CollectionViewSource
@@ -77,7 +89,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Border Background="{ThemeResource ListViewItemPlaceholderBackgroundThemeBrush}" Width="60" Height="60">
+                        <Border Background="{ThemeResource ListViewItemPlaceholderBackgroundThemeBrush}" Width="40" Height="40">
                             <Image Source="{Binding ImagePath}" Stretch="UniformToFill" AutomationProperties.Name="{Binding Title}"/>
                         </Border>
                         <StackPanel Grid.Column="1" Margin="10,0,0,0">
@@ -118,7 +130,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Image Source="{Binding ImagePath}" Grid.Row="1" Margin="0,0,20,0" Width="180" Height="180" Stretch="UniformToFill" AutomationProperties.Name="{Binding Title}"/>
+                <Image Source="{Binding ImagePath}" Grid.Row="1" Margin="0,0,20,0" Width="60" Height="60" Stretch="UniformToFill" AutomationProperties.Name="{Binding Title}"/>
                 <StackPanel x:Name="itemDetailTitlePanel" Grid.Row="1" Grid.Column="1">
                     <TextBlock x:Name="itemTitle" Margin="0,-10,0,0" Text="{Binding Title}" Style="{StaticResource SubheaderTextBlockStyle}"/>
                     <TextBlock x:Name="itemSubtitle" Margin="0,0,0,20" Text="{Binding Subtitle}" Style="{StaticResource SubtitleTextBlockStyle}"/>

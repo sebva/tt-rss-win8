@@ -77,8 +77,15 @@ namespace TinyTinyRss
             catch(InvalidConfigurationException ex)
             {
                 GeneralSettingsFlyout sf = new GeneralSettingsFlyout();
+                sf.Unloaded += sf_Unloaded;
                 sf.ShowIndependent();
             }
+        }
+
+        void sf_Unloaded(object sender, RoutedEventArgs e)
+        {
+            Settings.GetInstance().SaveState();
+            navigationHelper_LoadState(null, null);
         }
 
         /// <summary>
@@ -117,5 +124,10 @@ namespace TinyTinyRss
         }
 
         #endregion
+
+        private void RefreshButton_Click(object sender, RoutedEventArgs e)
+        {
+            navigationHelper_LoadState(null, null);
+        }
     }
 }

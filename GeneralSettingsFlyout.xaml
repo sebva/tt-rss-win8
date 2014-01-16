@@ -8,7 +8,7 @@
     mc:Ignorable="d"
     IconSource="Assets/SmallLogo.png"
     Title="General settings"
-    d:DesignWidth="346">
+    d:DesignWidth="370">
 
     <!-- Ce StackPanel sert de panneau racine pour la disposition verticale des sections de contenu -->
     <StackPanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch" >
@@ -19,14 +19,14 @@
         <StackPanel Style="{StaticResource SettingsFlyoutSectionStyle}">
 
             <!-- En-tête de la section 1 -->
-            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Connection " />
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Connection details" />
 
             <!-- Corps de la section 1 -->
-            <TextBox x:Name="tbxUrl" Header="Instance URL" Width="200" InputScope="Url" TextChanged="saveSettings"/>
+            <TextBox x:Name="tbxUrl" Header="Instance URL" Width="289" InputScope="Url" TextChanged="saveSettings"/>
 
-            <TextBox x:Name="tbxUser" Header="Username" Width="200" TextChanged="saveSettings"/>
+            <TextBox x:Name="tbxUser" Header="Username" Width="289" TextChanged="saveSettings"/>
             
-            <PasswordBox x:Name="tbxPassword" Header="Password" Width="200" PasswordChanged="saveSettings"/>
+            <PasswordBox x:Name="tbxPassword" Header="Password" Width="289" PasswordChanged="saveSettings"/>
 
 
 

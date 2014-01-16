@@ -11,12 +11,18 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <Page.BottomAppBar>
+        <CommandBar>
+            <AppBarButton Label="Refresh" Icon="Refresh" Click="RefreshButton_Click"/>
+        </CommandBar>
+    </Page.BottomAppBar>
+
     <Page.Resources>
         <!-- Collection d'éléments affichés par cette page -->
         <CollectionViewSource
             x:Name="itemsViewSource"
             Source="{Binding Items}"
-            d:Source="{Binding Groups, Source={d:DesignData Source=/DataModel/SampleData.json, Type=data:SampleDataSource}}"/>
+            d:Source="{Binding Groups, Source={d:DesignData Type=data:TTRssDataSource}}"/>
     </Page.Resources>
 
     <!--
@@ -52,7 +58,7 @@
                 <DataTemplate>
                     <Grid HorizontalAlignment="Left" Width="250" Height="250">
                         <Border Background="{ThemeResource ListViewItemPlaceholderBackgroundThemeBrush}">
-                            <Image Source="{Binding ImagePath}" Stretch="UniformToFill" AutomationProperties.Name="{Binding Title}"/>
+                            <Image Source="{Binding ImagePath}" Stretch="None" AutomationProperties.Name="{Binding Title}"/>
                         </Border>
                         <StackPanel VerticalAlignment="Bottom" Background="{ThemeResource ListViewItemOverlayBackgroundThemeBrush}">
                             <TextBlock Text="{Binding Title}" Foreground="{ThemeResource ListViewItemOverlayForegroundThemeBrush}" Style="{StaticResource BaseTextBlockStyle}" Height="60" Margin="15,0,15,0" FontWeight="SemiBold"/>
