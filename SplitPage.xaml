@@ -16,9 +16,9 @@
             <AppBarButton Label="Refresh" Icon="Refresh" Click="RefreshButton_Click"/>
 
             <CommandBar.SecondaryCommands>
-                <AppBarButton Label="Read" Icon="MailFilled" Click="AppBarButton_Click"/>
-                <AppBarButton Label="Star" Icon="Favorite" Click="AppBarButton_Click"/>
-                <AppBarButton Label="Publish" Icon="ReShare" Click="AppBarButton_Click"/>
+                <AppBarButton Name="readButton" Label="Read" Icon="MailFilled" Click="AppBarButton_Click"/>
+                <AppBarButton Name="starButton" Label="Star" Icon="Favorite" Click="AppBarButton_Click"/>
+                <AppBarButton Name="publishButton" Label="Publish" Icon="ReShare" Click="AppBarButton_Click"/>
             </CommandBar.SecondaryCommands>
         </CommandBar>
     </Page.BottomAppBar>
@@ -29,6 +29,7 @@
             x:Name="itemsViewSource"
             Source="{Binding Items}"
             d:Source="{Binding Groups[0].Items, Source={d:DesignData Source=/DataModel/SampleData.json, Type=data:TTRssDataSource}}"/>
+        <local:BoolToBoldConverter x:Key="BoolToBold" />
     </Page.Resources>
 
     <!--
@@ -93,8 +94,8 @@
                             <Image Source="{Binding ImagePath}" Stretch="UniformToFill" AutomationProperties.Name="{Binding Title}"/>
                         </Border>
                         <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                            <TextBlock Text="{Binding Title}" Style="{StaticResource TitleTextBlockStyle}" TextWrapping="NoWrap" MaxHeight="40"/>
-                            <TextBlock Text="{Binding Subtitle}" Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="NoWrap"/>
+                            <TextBlock Text="{Binding Title}" Style="{StaticResource TitleTextBlockStyle}" TextWrapping="NoWrap" MaxHeight="40" FontWeight="{Binding IsRead, Converter={StaticResource BoolToBold}}"/>
+                            <TextBlock Text="{Binding Subtitle}" Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="NoWrap" FontWeight="{Binding IsRead, Converter={StaticResource BoolToBold}}"/>
                         </StackPanel>
                     </Grid>
                 </DataTemplate>
@@ -135,10 +136,10 @@
                     <TextBlock x:Name="itemTitle" Margin="0,-10,0,0" Text="{Binding Title}" Style="{StaticResource SubheaderTextBlockStyle}"/>
                     <TextBlock x:Name="itemSubtitle" Margin="0,0,0,20" Text="{Binding Subtitle}" Style="{StaticResource SubtitleTextBlockStyle}"/>
                 </StackPanel>
-                <Border x:Name="contentViewBorder" BorderBrush="Gray" BorderThickness="2" 
-                        Grid.Row="2" Grid.ColumnSpan="2" Margin="0,15,0,20">
+                <Border x:Name="contentViewBorder" BorderBrush="Transparent" BorderThickness="0" 
+                        Grid.Row="2" Grid.ColumnSpan="2" Margin="0,15,0,0">
                     <Grid>
-                        <WebView x:Name="contentView" />
+                        <WebView x:Name="contentView" DefaultBackgroundColor="#FF1D1D1D"/>
                         <Rectangle x:Name="contentViewRect" />
                     </Grid>
                 </Border>

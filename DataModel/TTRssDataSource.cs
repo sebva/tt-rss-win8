@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Data.Json;
@@ -19,15 +20,21 @@ namespace TinyTinyRss.Data
     /// <summary>
     /// Modèle de données d'élément générique.
     /// </summary>
-    public class RssArticle
+    public class RssArticle : INotifyPropertyChanged
     {
-        public RssArticle(int uniqueId, String title, String subtitle, String imagePath, String content)
+        public enum RssArticleFlag 
+        {
+            Starred = 0, Read = 2, Published = 1
+        }
+
+        public RssArticle(int uniqueId, String title, String subtitle, String imagePath, String content, bool isRead)
         {
             this.UniqueId = uniqueId;
             this.Title = title;
             this.Subtitle = subtitle;
             this.ImagePath = imagePath;
             this.Content = content;
+            this.IsRead = isRead;
         }
 
         public int UniqueId { get; private set; }
@@ -35,12 +42,32 @@ namespace TinyTinyRss.Data
         public string Subtitle { get; private set; }
         public string ImagePath { get; private set; }
         public string Content { get; private set; }
+        private bool _isRead;
+        public bool IsRead
+        {
+            get { return _isRead; }
+            set
+            {
+                this._isRead = value;
+                this.onPropertyChanged("IsRead");
+            }
+        }
 
         public override string ToString()
         {
             return this.Title;
         }
-    }
+    
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void onPropertyChanged(string property)
+        {
+            if (this.PropertyChanged != null)
+            {
+                this.PropertyChanged(this, new PropertyChangedEventArgs(property));
+            }
+        }   
+}
 
     /// <summary>
     /// Modèle de données de groupe générique.
@@ -87,6 +114,7 @@ namespace TinyTinyRss.Data
         private static string _token = null;
 
         private static ObservableCollection<RssFeed> _groups = new ObservableCollection<RssFeed>();
+        private static string kHead = "<head><style type=\"text/css\">*{color:white;} body{font-family:\"Segoe UI\"}</style></head>";
         public static ObservableCollection<RssFeed> Groups
         {
             get { return _groups; }
@@ -126,6 +154,17 @@ namespace TinyTinyRss.Data
                     throw new InvalidConfigurationException("Login error");
             }
             return jsonRes;
+        }
+
+        public static async Task ToggleState(int articleId, RssArticle.RssArticleFlag flag)
+        {
+            JsonObject jsonRequest = new JsonObject();
+            jsonRequest.Add("op", JsonValue.CreateStringValue("updateArticle"));
+            jsonRequest.Add("article_ids", JsonValue.CreateNumberValue(articleId));
+            jsonRequest.Add("mode", JsonValue.CreateNumberValue(2));
+            jsonRequest.Add("field", JsonValue.CreateNumberValue((int) flag));
+
+            await QueryApi(jsonRequest);
         }
 
         private static async Task GetToken()
@@ -203,7 +242,8 @@ namespace TinyTinyRss.Data
                 if (feed_id_int != -1 && Groups.Where((group) => group.UniqueId.Equals(feed_id_int)).First().ImagePath != imagePath)
                     imagePath = Settings.GetInstance().InstanceUri + "/feed-icons/" + feed_id_int + ".ico";
 
-                feed.Items.Add(new RssArticle((int)article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("feed_title"), imagePath, article.GetNamedString("content")));
+                string content = kHead + "<body>" + article.GetNamedString("content") + "</body>";
+                feed.Items.Add(new RssArticle((int)article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("feed_title"), imagePath, content, !article.GetNamedBoolean("unread")));
             }
             return feed;
         }
@@ -216,7 +256,8 @@ namespace TinyTinyRss.Data
 
             JsonObject jsonResponse = await QueryApi(jsonRequest);
             JsonObject article = jsonResponse.GetNamedArray("content").First().GetObject();
-            return new RssArticle((int) article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("author"), "Assets/DarkGray.png", article.GetNamedString("content"));
+            string content = kHead + "<body>" + article.GetNamedString("content") + "</body>";
+            return new RssArticle((int)article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("author"), "Assets/DarkGray.png", content, !article.GetNamedBoolean("unread"));
         }
        
     }

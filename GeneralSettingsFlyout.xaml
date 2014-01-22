@@ -7,8 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     IconSource="Assets/SmallLogo.png"
-    Title="General settings"
-    d:DesignWidth="370">
+    Title="General settings" Width="370">
 
     <!-- Ce StackPanel sert de panneau racine pour la disposition verticale des sections de contenu -->
     <StackPanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch" >

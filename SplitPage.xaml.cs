@@ -15,6 +15,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using System.Collections.ObjectModel;
 
 // Pour en savoir plus sur le modèle d'élément Page fractionnée, consultez la page http://go.microsoft.com/fwlink/?LinkId=234234
 
@@ -28,6 +29,7 @@ namespace TinyTinyRss
     {
         private NavigationHelper navigationHelper;
         private ObservableDictionary defaultViewModel = new ObservableDictionary();
+        private RssArticle currentArticle = null;
 
         /// <summary>
         /// NavigationHelper est utilisé sur chaque page pour faciliter la navigation et 
@@ -104,14 +106,34 @@ namespace TinyTinyRss
             }
         }
 
-        private void RefreshButton_Click(object sender, RoutedEventArgs e)
+        private async void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO
+            var group = await TTRssDataSource.GetGroupAsync((this.DefaultViewModel["Group"] as RssFeed).UniqueId);
+            this.DefaultViewModel["Group"] = group;
+            this.DefaultViewModel["Items"] = group.Items;
         }
 
-        private void AppBarButton_Click(object sender, RoutedEventArgs e)
+        private async void AppBarButton_Click(object sender, RoutedEventArgs e)
         {
+            RssArticle.RssArticleFlag flag;
+            switch((sender as AppBarButton).Name)
+            {
+                default:
+                case "readButton":
+                    flag = RssArticle.RssArticleFlag.Read;
+                    break;
+                case "starButton":
+                    flag = RssArticle.RssArticleFlag.Starred;
+                    break;
+                case "publishButton":
+                    flag = RssArticle.RssArticleFlag.Published;
+                    break;
+            }
 
+            if (flag == RssArticle.RssArticleFlag.Read)
+                currentArticle.IsRead = !currentArticle.IsRead;
+
+            await TTRssDataSource.ToggleState(currentArticle.UniqueId, flag);
         }
 
         /// <summary>
@@ -170,7 +192,7 @@ namespace TinyTinyRss
         /// </summary>
         /// <param name="sender">GridView qui affiche l'élément sélectionné.</param>
         /// <param name="e">Données d'événement décrivant la façon dont la sélection a été modifiée.</param>
-        private void ItemListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void ItemListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             // Invalidez l'état d'affichage lorsque la navigation entre pages logiques est en cours, car une modification
             // apportée à la sélection pourrait entraîner la modification de la page logique active correspondante.  Lorsqu'un
@@ -181,9 +203,16 @@ namespace TinyTinyRss
 
             Selector list = sender as Selector;
             RssArticle selectedItem = list.SelectedItem as RssArticle;
+            currentArticle = selectedItem;
             if (selectedItem != null)
             {
                 this.contentView.NavigateToString(selectedItem.Content);
+                if (!selectedItem.IsRead)
+                {
+                    selectedItem.IsRead = true;
+                    await TTRssDataSource.ToggleState(selectedItem.UniqueId, RssArticle.RssArticleFlag.Read);
+                }
+
             }
             else
             {
