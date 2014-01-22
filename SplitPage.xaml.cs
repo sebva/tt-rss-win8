@@ -16,6 +16,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using System.Collections.ObjectModel;
+using Windows.ApplicationModel.DataTransfer;
 
 // Pour en savoir plus sur le modèle d'élément Page fractionnée, consultez la page http://go.microsoft.com/fwlink/?LinkId=234234
 
@@ -30,6 +31,7 @@ namespace TinyTinyRss
         private NavigationHelper navigationHelper;
         private ObservableDictionary defaultViewModel = new ObservableDictionary();
         private RssArticle currentArticle = null;
+        private DataTransferManager dataTransferManager;
 
         /// <summary>
         /// NavigationHelper est utilisé sur chaque page pour faciliter la navigation et 
@@ -46,6 +48,16 @@ namespace TinyTinyRss
         public ObservableDictionary DefaultViewModel
         {
             get { return this.defaultViewModel; }
+        }
+
+        private void OnDataRequested(DataTransferManager sender, DataRequestedEventArgs e)
+        {
+            var request = e.Request;
+
+            DataPackage requestData = request.Data;
+            requestData.Properties.Title = currentArticle.Title;
+            requestData.Properties.Description = currentArticle.Subtitle;
+            requestData.SetWebLink(currentArticle.Link);
         }
 
         public SplitPage()
@@ -288,11 +300,16 @@ namespace TinyTinyRss
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             navigationHelper.OnNavigatedTo(e);
+            // Register the current page as a share source.
+            this.dataTransferManager = DataTransferManager.GetForCurrentView();
+            this.dataTransferManager.DataRequested += new TypedEventHandler<DataTransferManager, DataRequestedEventArgs>(this.OnDataRequested);
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
             navigationHelper.OnNavigatedFrom(e);
+            // Register the current page as a share source.
+            this.dataTransferManager.DataRequested -= new TypedEventHandler<DataTransferManager, DataRequestedEventArgs>(this.OnDataRequested);
         }
 
         #endregion

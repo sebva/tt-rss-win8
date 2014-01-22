@@ -27,7 +27,7 @@ namespace TinyTinyRss.Data
             Starred = 0, Read = 2, Published = 1
         }
 
-        public RssArticle(int uniqueId, String title, String subtitle, String imagePath, String content, bool isRead)
+        public RssArticle(int uniqueId, String title, String subtitle, String imagePath, String content, bool isRead, Uri link)
         {
             this.UniqueId = uniqueId;
             this.Title = title;
@@ -35,6 +35,7 @@ namespace TinyTinyRss.Data
             this.ImagePath = imagePath;
             this.Content = content;
             this.IsRead = isRead;
+            this.Link = link;
         }
 
         public int UniqueId { get; private set; }
@@ -52,6 +53,7 @@ namespace TinyTinyRss.Data
                 this.onPropertyChanged("IsRead");
             }
         }
+        public Uri Link { get; private set; }
 
         public override string ToString()
         {
@@ -243,7 +245,7 @@ namespace TinyTinyRss.Data
                     imagePath = Settings.GetInstance().InstanceUri + "/feed-icons/" + feed_id_int + ".ico";
 
                 string content = kHead + "<body>" + article.GetNamedString("content") + "</body>";
-                feed.Items.Add(new RssArticle((int)article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("feed_title"), imagePath, content, !article.GetNamedBoolean("unread")));
+                feed.Items.Add(new RssArticle((int)article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("feed_title"), imagePath, content, !article.GetNamedBoolean("unread"), new Uri(article.GetNamedString("link"))));
             }
             return feed;
         }
@@ -257,7 +259,7 @@ namespace TinyTinyRss.Data
             JsonObject jsonResponse = await QueryApi(jsonRequest);
             JsonObject article = jsonResponse.GetNamedArray("content").First().GetObject();
             string content = kHead + "<body>" + article.GetNamedString("content") + "</body>";
-            return new RssArticle((int)article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("author"), "Assets/DarkGray.png", content, !article.GetNamedBoolean("unread"));
+            return new RssArticle((int)article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("author"), "Assets/DarkGray.png", content, !article.GetNamedBoolean("unread"), new Uri(article.GetNamedString("link")));
         }
        
     }
