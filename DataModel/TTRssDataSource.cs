@@ -124,38 +124,44 @@ namespace TinyTinyRss.Data
 
         private static async Task<JsonObject> QueryApi(JsonObject json)
         {
-        reQuery:
-            if(_token != null)
+            bool finished = false;
+            while (!finished)
             {
-                if(json.ContainsKey("sid"))
-                    json.Remove("sid");
-                json.Add("sid", JsonValue.CreateStringValue(_token));
-            }
-            Settings settings = Settings.GetInstance();
-
-            if (settings.InstanceUri == null)
-                throw new InvalidConfigurationException("URI not set");
-
-            Uri uri = new Uri(settings.InstanceUri, "api/");
-            HttpClient http = new HttpClient();
-            HttpResponseMessage result = await http.PostAsync(uri, new HttpStringContent(json.Stringify()));
-            JsonObject jsonRes;
-            bool ok = JsonObject.TryParse(await result.Content.ReadAsStringAsync(), out jsonRes);
-            if (!ok)
-                throw new InvalidConfigurationException("Not JSON");
-
-            if (jsonRes.GetNamedNumber("status") != 0)
-            {
-                if (jsonRes.GetNamedObject("content").GetNamedString("error") == "NOT_LOGGED_IN")
+                if(_token != null)
                 {
-                    await GetToken();
-                    await QueryApi(json);
-                    goto reQuery;
+                    if(json.ContainsKey("sid"))
+                        json.Remove("sid");
+                    json.Add("sid", JsonValue.CreateStringValue(_token));
                 }
-                else if (jsonRes.GetNamedObject("content").GetNamedString("error") == "LOGIN_ERROR")
-                    throw new InvalidConfigurationException("Login error");
+                Settings settings = Settings.GetInstance();
+
+                if (settings.InstanceUri == null)
+                    throw new InvalidConfigurationException("URI not set");
+
+                Uri uri = new Uri(settings.InstanceUri, "api/");
+                HttpClient http = new HttpClient();
+                HttpResponseMessage result = await http.PostAsync(uri, new HttpStringContent(json.Stringify()));
+                JsonObject jsonRes;
+                bool ok = JsonObject.TryParse(await result.Content.ReadAsStringAsync(), out jsonRes);
+                if (!ok)
+                    throw new InvalidConfigurationException("Not JSON");
+
+                if (jsonRes.GetNamedNumber("status") != 0)
+                {
+                    if (jsonRes.GetNamedObject("content").GetNamedString("error") == "NOT_LOGGED_IN")
+                    {
+                        await GetToken();
+                        await QueryApi(json);
+                        continue;
+                    }
+                    else if (jsonRes.GetNamedObject("content").GetNamedString("error") == "LOGIN_ERROR")
+                        throw new InvalidConfigurationException("Login error");
+                }
+                else
+                    finished = true;
+                return jsonRes;
             }
-            return jsonRes;
+            return null;
         }
 
         public static async Task ToggleState(int articleId, RssArticle.RssArticleFlag flag)
