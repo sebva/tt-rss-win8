@@ -221,6 +221,7 @@ namespace TinyTinyRss
                 this.contentView.NavigateToString(selectedItem.Content);
                 if (!selectedItem.IsRead)
                 {
+                    // Chaque article lu est marqué comme lu sur le serveur
                     selectedItem.IsRead = true;
                     await TTRssDataSource.ToggleState(selectedItem.UniqueId, RssArticle.RssArticleFlag.Read);
                 }

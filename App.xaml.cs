@@ -97,6 +97,7 @@ namespace TinyTinyRss
         }
         protected override void OnWindowCreated(WindowCreatedEventArgs args)
         {
+            // Enregistrement du SettingsFlyout auprès du système
             SettingsPane.GetForCurrentView().CommandsRequested += (s, e) =>
             {
                 SettingsCommand defaultsCommand = new SettingsCommand("general", "General",
@@ -114,6 +115,7 @@ namespace TinyTinyRss
 
         void sf_Unloaded(object sender, RoutedEventArgs e)
         {
+            // Sauvegarde des paramètres lorsque le SettingsFlyout est fermé
             Settings.GetInstance().SaveState();
         }
 

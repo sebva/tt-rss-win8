@@ -1,38 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest">
-
-  <Identity Name="9f2f74c6-9da8-4aaa-b79b-e58d0c2f5688"
-            Publisher="CN=Sébastien"
-            Version="1.0.0.0" />
-
+  <Identity Name="9f2f74c6-9da8-4aaa-b79b-e58d0c2f5688" Publisher="CN=Sébastien" Version="1.0.0.0" />
   <Properties>
     <DisplayName>TinyTinyRss</DisplayName>
     <PublisherDisplayName>Sébastien</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
-
   <Prerequisites>
     <OSMinVersion>6.3.0</OSMinVersion>
     <OSMaxVersionTested>6.3.0</OSMaxVersionTested>
   </Prerequisites>
-
   <Resources>
-    <Resource Language="x-generate"/>
+    <Resource Language="x-generate" />
   </Resources>
-
   <Applications>
-    <Application Id="App"
-        Executable="$targetnametoken$.exe"
-        EntryPoint="TinyTinyRss.App">
-        <m2:VisualElements
-            DisplayName="TinyTinyRss"
-            Square150x150Logo="Assets\Logo.png"
-            Square30x30Logo="Assets\SmallLogo.png"
-            Description="TinyTinyRss"
-            ForegroundText="light"
-            BackgroundColor="#464646">
-            <m2:SplashScreen Image="Assets\SplashScreen.png" />
-        </m2:VisualElements>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="TinyTinyRss.App">
+      <m2:VisualElements DisplayName="Tiny Tiny RSS" Square150x150Logo="Assets\Logo.png" Square30x30Logo="Assets\SmallLogo.png" Description="Tiny Tiny RSS client for Windows RT" ForegroundText="light" BackgroundColor="#464646">
+        <m2:SplashScreen Image="Assets\SplashScreen.png" />
+      </m2:VisualElements>
     </Application>
   </Applications>
   <Capabilities>

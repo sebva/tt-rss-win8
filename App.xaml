@@ -8,6 +8,6 @@
     <Application.Resources>
 
         <!-- Ressources spécifiques à l'application -->
-        <x:String x:Key="AppName">TinyTinyRSS</x:String>
+        <x:String x:Key="AppName">Tiny Tiny RSS</x:String>
     </Application.Resources>
 </Application>

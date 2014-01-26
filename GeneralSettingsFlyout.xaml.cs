@@ -17,6 +17,10 @@ using Windows.UI.Xaml.Navigation;
 
 namespace TinyTinyRss
 {
+    /// <summary>
+    /// SettingsFlyout général de l'application
+    /// Lié à l'objet Settings global
+    /// </summary>
     public sealed partial class GeneralSettingsFlyout : SettingsFlyout
     {
         private Settings settings;

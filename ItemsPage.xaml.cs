@@ -76,6 +76,7 @@ namespace TinyTinyRss
             }
             catch(InvalidConfigurationException ex)
             {
+                // Si la configuration est incorrecte, alors le SettingsFlyout est ouvert pour que l'utilisateur corrige les informations
                 GeneralSettingsFlyout sf = new GeneralSettingsFlyout();
                 sf.Unloaded += sf_Unloaded;
                 sf.ShowIndependent();
@@ -84,6 +85,7 @@ namespace TinyTinyRss
 
         void sf_Unloaded(object sender, RoutedEventArgs e)
         {
+            // Quand le SettingsFlyout est fermé, on enregistre les paramètres et on actualise les flux
             Settings.GetInstance().SaveState();
             navigationHelper_LoadState(null, null);
         }

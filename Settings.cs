@@ -7,12 +7,20 @@ using Windows.Storage;
 
 namespace TinyTinyRss
 {
+    /// <summary>
+    /// Classe singleton qui permet l'enregistrement et la restoration des paramètres généraux de l'application.
+    /// Se synchronise entre les différents PC via RoamingSettings
+    /// </summary>
     class Settings
     {
+        /// <summary>
+        /// Singleton instance
+        /// </summary>
         private static Settings instance = null;
 
         private Settings()
         {
+            // Restauration des valeurs si applicable
             ApplicationDataContainer data = ApplicationData.Current.RoamingSettings;
             object uri = data.Values["url"];
             if (uri is string)
@@ -30,6 +38,9 @@ namespace TinyTinyRss
             SaveState();
         }
 
+        /// <summary>
+        /// Enregistre les valeurs dans RoamingSettings
+        /// </summary>
         public void SaveState()
         {
             ApplicationDataContainer data = ApplicationData.Current.RoamingSettings;
@@ -38,6 +49,10 @@ namespace TinyTinyRss
             data.Values["password"] = Password;
         }
 
+        /// <summary>
+        /// Retourne l'instance de Settings
+        /// </summary>
+        /// <returns>L'objet Settings global</returns>
         public static Settings GetInstance()
         {
             if (instance == null)
@@ -46,8 +61,17 @@ namespace TinyTinyRss
             return instance;
         }
 
+        /// <summary>
+        /// L'URL du serveur Tiny Tiny RSS
+        /// </summary>
         public Uri InstanceUri { get; set; }
+        /// <summary>
+        /// Le nom d'utilisateur pour accéder à TT-RSS
+        /// </summary>
         public string Username { get; set; }
+        /// <summary>
+        /// Le mot de passe permettant l'accès à TT-RSS
+        /// </summary>
         public string Password { get; set; }
     }
 }

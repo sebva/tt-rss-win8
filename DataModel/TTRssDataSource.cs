@@ -7,18 +7,11 @@ using System.Threading.Tasks;
 using Windows.Data.Json;
 using Windows.Web.Http;
 
-// Le modèle de données défini par ce fichier sert d'exemple représentatif d'un modèle fortement typé
-// modèle.  Les noms de propriétés choisis correspondent aux liaisons de données dans les modèles d'élément standard.
-//
-// Les applications peuvent utiliser ce modèle comme point de départ et le modifier à leur convenance, ou le supprimer complètement et
-// le remplacer par un autre correspondant à leurs besoins. L'utilisation de ce modèle peut vous permettre d'améliorer votre application 
-// réactivité en lançant la tâche de chargement des données dans le code associé à App.xaml lorsque l'application 
-// est démarrée pour la première fois.
 
 namespace TinyTinyRss.Data
 {
     /// <summary>
-    /// Modèle de données d'élément générique.
+    /// Représente un article d'un flux RSS
     /// </summary>
     public class RssArticle : INotifyPropertyChanged
     {
@@ -72,7 +65,7 @@ namespace TinyTinyRss.Data
 }
 
     /// <summary>
-    /// Modèle de données de groupe générique.
+    /// Représente un flux RSS contenant des articles. Peut être une aggrégation de plusieurs flux.
     /// </summary>
     public class RssFeed
     {
@@ -106,22 +99,31 @@ namespace TinyTinyRss.Data
     }
 
     /// <summary>
-    /// Crée une collection de groupes et d'éléments dont le contenu est lu à partir d'un fichier json statique.
-    /// 
-    /// SampleDataSource initialise avec les données lues à partir d'un fichier json statique dans 
-    /// projet.  Elle fournit des exemples de données à la fois au moment de la conception et de l'exécution.
+    /// Datasource pour Tiny Tiny RSS
     /// </summary>
     public sealed class TTRssDataSource
     {
+        /// <summary>
+        /// Jeton d'accès au serveur, si déjà obtenu
+        /// </summary>
         private static string _token = null;
 
         private static ObservableCollection<RssFeed> _groups = new ObservableCollection<RssFeed>();
+        /// <summary>
+        /// CSS permettant l'affichage du contenu des articles en blanc avec police Windows
+        /// </summary>
         private static string kHead = "<head><style type=\"text/css\">*{color:white;} body{font-family:\"Segoe UI\"}</style></head>";
         public static ObservableCollection<RssFeed> Groups
         {
             get { return _groups; }
         }
 
+        /// <summary>
+        /// Effectue une requête vers TT-RSS.
+        /// L'authentification est gérée en interne par cette méthode.
+        /// </summary>
+        /// <param name="json"></param>
+        /// <returns></returns>
         private static async Task<JsonObject> QueryApi(JsonObject json)
         {
             bool finished = false;
@@ -129,6 +131,7 @@ namespace TinyTinyRss.Data
             {
                 if(_token != null)
                 {
+                    // Ajout du session ID à la requête
                     if(json.ContainsKey("sid"))
                         json.Remove("sid");
                     json.Add("sid", JsonValue.CreateStringValue(_token));
@@ -148,12 +151,14 @@ namespace TinyTinyRss.Data
 
                 if (jsonRes.GetNamedNumber("status") != 0)
                 {
+                    // Si cette erreur est reçue, il faut simplement demander le jeton d'accès et réessayer
                     if (jsonRes.GetNamedObject("content").GetNamedString("error") == "NOT_LOGGED_IN")
                     {
                         await GetToken();
                         await QueryApi(json);
                         continue;
                     }
+                    // Cette erreur indique que l'utilisateur a donné de faux renseignements
                     else if (jsonRes.GetNamedObject("content").GetNamedString("error") == "LOGIN_ERROR")
                         throw new InvalidConfigurationException("Login error");
                 }
@@ -164,6 +169,12 @@ namespace TinyTinyRss.Data
             return null;
         }
 
+        /// <summary>
+        /// Bascule l'état d'un drapeau sur un article en particulier
+        /// </summary>
+        /// <param name="articleId">L'identifiant de l'article en question</param>
+        /// <param name="flag">Le drapeau à changer</param>
+        /// <returns></returns>
         public static async Task ToggleState(int articleId, RssArticle.RssArticleFlag flag)
         {
             JsonObject jsonRequest = new JsonObject();
@@ -175,6 +186,10 @@ namespace TinyTinyRss.Data
             await QueryApi(jsonRequest);
         }
 
+        /// <summary>
+        /// Effectue la connexion et stocke le jeton reçu dans Settings
+        /// </summary>
+        /// <returns></returns>
         private static async Task GetToken()
         {
             Settings settings = Settings.GetInstance();
@@ -188,6 +203,10 @@ namespace TinyTinyRss.Data
             _token = json.GetNamedObject("content").GetNamedString("session_id");
         }
 
+        /// <summary>
+        /// Va chercher la liste de tous les flux
+        /// </summary>
+        /// <returns>La liste des flux du serveur</returns>
         public static async Task<IEnumerable<RssFeed>> GetGroupsAsync()
         {
             JsonObject jsonRequest = new JsonObject();
@@ -204,10 +223,12 @@ namespace TinyTinyRss.Data
                 string imageUri = "Assets/DarkGray.png";
                 string unreadStr = "";
 
+                // Si le flux annonce qu'il possède une icône, on l'utilise
                 if (feed.GetNamedBoolean("has_icon", false))
                     imageUri = Settings.GetInstance().InstanceUri + "/feed-icons/" + feed.GetNamedNumber("id").ToString() + ".ico";
                 JsonValue unread = feed.GetNamedValue("unread");
                 int unreadInt = -1;
+                // Parfois, tt-rss retourne le nombre d'articles non-lus sous forme de string, parfois sous forme d'entier...
                 if (unread.ValueType.Equals(JsonValueType.Number))
                     unreadInt = (int) unread.GetNumber();
                 if (unread.ValueType.Equals(JsonValueType.String))
@@ -222,6 +243,12 @@ namespace TinyTinyRss.Data
             return Groups;
         }
 
+        /// <summary>
+        /// Va chercher la liste des articles relatifs à un flux.
+        /// Le contenu de l'article est inclus.
+        /// </summary>
+        /// <param name="uniqueId">L'identifiant du flux</param>
+        /// <returns>L'objet flux contenant les articles</returns>
         public static async Task<RssFeed> GetGroupAsync(int uniqueId)
         {
             JsonObject jsonRequest = new JsonObject();
@@ -242,6 +269,7 @@ namespace TinyTinyRss.Data
                 string imagePath = "Assets/DarkGray.png";
                 JsonValue feed_id = article.GetNamedValue("feed_id");
                 int feed_id_int = -1;
+                // TT-RSS retourne parfois des nombres sous forme de string, allez savoir pourquoi...
                 if (feed_id.ValueType.Equals(JsonValueType.Number))
                     feed_id_int = (int)feed_id.GetNumber();
                 if (feed_id.ValueType.Equals(JsonValueType.String))
@@ -250,12 +278,18 @@ namespace TinyTinyRss.Data
                 if (feed_id_int != -1 && Groups.Where((group) => group.UniqueId.Equals(feed_id_int)).First().ImagePath != imagePath)
                     imagePath = Settings.GetInstance().InstanceUri + "/feed-icons/" + feed_id_int + ".ico";
 
+                // Ajout du style spécial Windows
                 string content = kHead + "<body>" + article.GetNamedString("content") + "</body>";
                 feed.Items.Add(new RssArticle((int)article.GetNamedNumber("id"), article.GetNamedString("title"), article.GetNamedString("feed_title"), imagePath, content, !article.GetNamedBoolean("unread"), new Uri(article.GetNamedString("link"))));
             }
             return feed;
         }
 
+        /// <summary>
+        /// Va chercher un article en particulier auprès du serveur
+        /// </summary>
+        /// <param name="uniqueId">L'identifiant de l'article</param>
+        /// <returns>L'objet article correspondant</returns>
         public static async Task<RssArticle> GetItemAsync(int uniqueId)
         {
             JsonObject jsonRequest = new JsonObject();
